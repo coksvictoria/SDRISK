@@ -406,3 +406,18 @@
   with another unconfirmed policy.
 - **Status:** Accepted. YAML loading and validation remain supported and are
   covered by tests using temporary policy files.
+
+## 2026-10-17: Aggregate subset report results
+
+- **Decision:** Keep table and cluster metrics quantitative and per result, but
+  summarize subset metrics by generic QI-set or stratum label. Report
+  unweighted medians of values and baselines, output-filtered status counts,
+  and the minimum-n suppressed-group count; do not export subset keys.
+- **Reason:** Per-equivalence-class rows repeated generic labels and produced
+  an unwieldy report without safely identifying actionable groups. Aggregated
+  medians and status counts retain quantitative detail without exporting QI
+  values; guard counts remain grouped by their safe configured label.
+- **Alternatives considered:** Export every subset row with repeated metric
+  explanations, or remove subset results entirely.
+- **Status:** Accepted. Metric definitions and interpretation remain in the
+  metric reference; the report displays subset medians to four decimal places.

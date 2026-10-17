@@ -13,6 +13,29 @@
   </style>
 </head>
 <body>
+  {% macro metric_table(metrics) %}
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th><th>Group</th><th>Value</th><th>Baseline</th>
+        <th>95% CI</th><th>Records</th><th>Flagged</th><th>Status</th>
+        <th>Experimental</th>
+      </tr>
+    </thead>
+    <tbody>{% for metric in metrics %}
+      <tr>
+        <td>{{ metric.name }}</td><td>{{ metric.group or "" }}</td>
+        <td>{{ metric.value if metric.value is not none else "" }}</td>
+        <td>{{ metric.baseline if metric.baseline is not none else "" }}</td>
+        <td>{{ metric.ci if metric.ci is not none else "" }}</td>
+        <td>{{ metric.n_records if metric.n_records is not none else "" }}</td>
+        <td>{{ metric.n_flagged if metric.n_flagged is not none else "" }}</td>
+        <td>{{ metric.status }}{% if metric.reason %}: {{ metric.reason }}{% endif %}</td>
+        <td>{{ metric.experimental }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table>
+  {% endmacro %}
   <h1>sdrisk assessment report</h1>
   <p>Profile: {{ report.profile.name }} ({{ report.profile.release_tier }})</p>
   <h2>Recommendation</h2>
@@ -23,40 +46,74 @@
   <h2>Provenance</h2>
   <p>Configuration SHA-256: {{ report.provenance.config_hash }}</p>
   <p>Package version: {{ report.provenance.package_version }}; seed: {{ report.provenance.seed }}</p>
-  <h2>Applicability</h2>
+  <h2>Applicability summary</h2>
   {% if report.applicability %}
   <table>
-    <thead><tr><th>Metric</th><th>Level</th><th>Status</th><th>Reason</th></tr></thead>
+    <thead><tr><th>Level</th><th>Status</th><th>Result count</th></tr></thead>
     <tbody>{% for item in report.applicability %}
-      <tr><td>{{ item.name }}</td><td>{{ item.level }}</td><td>{{ item.status }}</td><td>{{ item.reason }}</td></tr>
+      <tr>
+        <td>{{ item.level }}</td><td>{{ item.status }}</td>
+        <td>{{ item.count.value if item.count.value is not none else item.count.status }}</td>
+      </tr>
     {% endfor %}</tbody>
   </table>
-  {% else %}<p>All reported metrics were assessed without suppression.</p>{% endif %}
-  {% for level, metrics in report.results.items() %}
-  <h2>{{ level|capitalize }} results</h2>
+  {% else %}<p>No suppressed or not-assessed metric results.</p>{% endif %}
+  <h2>Table results</h2>
+  {{ metric_table(report.results.table) }}
+  <h2>Subset summaries</h2>
+  {% for group in report.results.subset %}
+  <h3>{{ group.group or "Unassigned subset results" }}</h3>
+  <p>
+    Small groups suppressed by minimum-n guard:
+    {{ group.subset_min_n_guard.suppressed_groups.value
+       if group.subset_min_n_guard.suppressed_groups.value is not none
+       else group.subset_min_n_guard.suppressed_groups.status }}
+  </p>
+  <p>Metric summaries use an {{ group.aggregation }}.</p>
   <table>
-    <thead><tr><th>Metric</th><th>Measure</th><th>What a fail means</th><th>Ask the submitter</th><th>Group</th><th>Value</th><th>Baseline</th><th>95% CI</th><th>Records</th><th>Status</th><th>Experimental</th></tr></thead>
-    <tbody>{% for metric in metrics %}
+    <thead>
       <tr>
-        <td>{{ metric.name }}</td><td>{{ metric.measure }}</td>
-        <td>{{ metric.fail_meaning }}</td><td>{{ metric.ask_submitter }}</td>
-        <td>{{ metric.group or "" }}</td>
-        <td>{{ metric.value if metric.value is not none else "" }}</td>
-        <td>{{ metric.baseline if metric.baseline is not none else "" }}</td>
-        <td>{{ metric.ci if metric.ci is not none else "" }}</td>
-        <td>{{ metric.n_records if metric.n_records is not none else "" }}</td>
-        <td>{{ metric.status }}{% if metric.reason %}: {{ metric.reason }}{% endif %}</td>
+        <th>Metric</th><th>Groups</th><th>Groups with value and baseline</th>
+        <th>Median value</th><th>Median baseline</th><th>Pass</th><th>Review</th>
+        <th>Fail</th><th>Suppressed</th><th>Not assessed</th><th>Experimental</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>{% for metric in group.metrics %}
+      <tr>
+        <td>{{ metric.name }}</td>
+        <td>{{ metric.n_groups.value if metric.n_groups.value is not none else metric.n_groups.status }}</td>
+        <td>{{ metric.n_groups_with_value_and_baseline.value
+               if metric.n_groups_with_value_and_baseline.value is not none
+               else metric.n_groups_with_value_and_baseline.status }}</td>
+        <td>{{ metric.median_value if metric.median_value is not none else "" }}</td>
+        <td>{{ metric.median_baseline if metric.median_baseline is not none else "" }}</td>
+        {% for status in ("pass", "review", "fail", "suppressed", "not_assessed") %}
+          {% set count = metric.status_counts.get(status) %}
+          <td>
+            {% if count %}
+              {{ count.value if count.value is not none else count.status }}
+            {% endif %}
+          </td>
+        {% endfor %}
         <td>{{ metric.experimental }}</td>
+        <td>{{ metric.reasons|join("; ") }}</td>
       </tr>
     {% endfor %}</tbody>
   </table>
   {% endfor %}
+  <h2>Cluster results</h2>
+  {{ metric_table(report.results.cluster) }}
   <h2>Row-band summary (aggregates only)</h2>
   {% if report.row_bands.status == "assessed" %}
   <table>
     <thead><tr><th>Band</th><th>Count</th><th>Status</th></tr></thead>
     <tbody>{% for band in ("low", "medium", "high", "total") %}
-      <tr><td>{{ band }}</td><td>{{ report.row_bands[band].value if report.row_bands[band].value is not none else "" }}</td><td>{{ report.row_bands[band].status }}</td></tr>
+      <tr>
+        <td>{{ band }}</td>
+        <td>{{ report.row_bands[band].value if report.row_bands[band].value is not none else "" }}</td>
+        <td>{{ report.row_bands[band].status }}</td>
+      </tr>
     {% endfor %}</tbody>
   </table>
   {% else %}<p>Not assessed: {{ report.row_bands.reason }}</p>{% endif %}

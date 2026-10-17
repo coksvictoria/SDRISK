@@ -11,13 +11,15 @@ population, intended release, and plausible attacker knowledge.
 1. **Check provenance.** Confirm the profile, seed, configuration hash, and
    input hashes in `audit.json`. The operational `run_manifest.json` contains
    local input paths and must remain restricted.
-2. **Check applicability.** A `not_assessed` result means an input or
-   precondition was unavailable. A `suppressed` result is intentionally hidden
-   by the output policy. Neither is evidence of low risk.
-3. **Read each value with its baseline.** Compare table, subset, and cluster
-   findings only with their stated baseline. The HTML and JSON reports include
-   a plain-language explanation and a suggested submitter question for each
-   diagnostic.
+2. **Check applicability.** The report summarizes suppressed and
+   `not_assessed` result counts by level. Each affected metric summary retains
+   its status and reason; neither status is evidence of low risk.
+3. **Read each value with its baseline.** Compare table and cluster findings
+   with their stated baselines. Subset results are unweighted medians across
+   reportable groups, shown beside output-filtered status counts; they are not
+   pooled estimates. QI keys are withheld, while minimum-n suppressions remain
+   summarized by the generic QI-set or stratum label. Consult
+   [metric reference](./metric_reference.md) for definitions and weaknesses.
 4. **Treat experimental results cautiously.** CER, KDE density-ratio MIA,
    singling-out, and linkability are marked experimental. The simplified
    attack variants are not complete implementations of Anonymeter.

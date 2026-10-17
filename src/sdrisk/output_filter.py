@@ -102,7 +102,7 @@ class OutputFilter:
         *,
         contributing_counts: Iterable[int] = (),
     ) -> MetricResult:
-        """Filter a metric and all values derived from suppressed counts."""
+        """Filter values while retaining only caller-supplied generic group labels."""
         if result.status in ("suppressed", "not_assessed"):
             return replace(
                 result,
@@ -111,7 +111,6 @@ class OutputFilter:
                 ci=None,
                 n_records=None,
                 n_flagged=None,
-                group=None,
             )
         counts = list(contributing_counts)
         if result.n_records is not None:
@@ -148,6 +147,5 @@ class OutputFilter:
             n_records=None,
             n_flagged=None,
             status="suppressed",
-            group=None,
             reason=reason,
         )

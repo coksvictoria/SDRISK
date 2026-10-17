@@ -1,8 +1,10 @@
 """Tests for aggregate-only JSON and HTML reports."""
 
 import json
+from dataclasses import replace
 
 from sdrisk.decision import AssessmentDecision
+from sdrisk.output_filter import OutputFilter
 from sdrisk.policy import PolicyProfile
 from sdrisk.provenance import RunProvenance
 from sdrisk.report.html_report import render_html_report
@@ -93,7 +95,9 @@ def test_json_report_is_filtered_and_contains_aggregate_row_bands_only() -> None
     assert "row_profiles" not in serialized
     assert "baseline" in serialized
     assert "not prove" in serialized
-    assert "ask_submitter" in serialized
+    assert "ask_submitter" not in serialized
+    assert "fail_meaning" not in serialized
+    assert "measure" not in report["results"]["table"][0]
 
 
 def test_html_report_uses_the_same_safe_aggregates() -> None:
@@ -104,4 +108,87 @@ def test_html_report_uses_the_same_safe_aggregates() -> None:
     assert "exact_match</" not in report
     assert "0.123456" not in report
     assert "passing these checks" in report
-    assert "ask the submitter" in report
+    assert "ask the submitter" not in report
+    assert "what a fail means" not in report
+
+
+def test_subset_report_aggregates_metrics_and_preserves_qi_guard_counts() -> None:
+    result = make_run_result()
+    subset_results = [
+        MetricResult(
+            name="subset_min_n_guard",
+            level="subset",
+            group="qi:core",
+            value=None,
+            baseline=None,
+            ci=None,
+            n_records=None,
+            n_flagged=None,
+            status="suppressed",
+            reason="subset partition is below the configured minimum cell size",
+        )
+        for _ in range(3)
+    ]
+    subset_results.extend(
+        MetricResult(
+            name="exact_match_rate",
+            level="subset",
+            group="qi:core:core",
+            value=value,
+            baseline=0.05,
+            ci=None,
+            n_records=10,
+            n_flagged=None,
+            status=status,
+        )
+        for value, status in (
+            (0.1, "pass"),
+            (0.2, "pass"),
+            (0.3, "pass"),
+            (0.4, "review"),
+            (0.5, "review"),
+            (0.6, "fail"),
+        )
+    )
+    result = replace(result, subset_results=tuple(subset_results))
+
+    report = json.loads(render_json_report(result))
+    subset = report["results"]["subset"]
+
+    assert len(subset) == 1
+    assert subset[0]["group"] == "qi:core"
+    assert subset[0]["subset_min_n_guard"]["suppressed_groups"] == {
+        "value": 3,
+        "status": "reported",
+        "reason": "",
+    }
+    metric = subset[0]["metrics"][0]
+    assert metric["name"] == "exact_match_rate"
+    assert metric["n_groups"]["value"] == 6
+    assert metric["median_value"] == 0.35
+    assert metric["median_baseline"] == 0.05
+    assert metric["status_counts"]["pass"]["value"] == 3
+    assert metric["status_counts"]["review"]["status"] == "suppressed"
+    assert metric["status_counts"]["fail"]["status"] == "suppressed"
+    assert "ask_submitter" not in render_json_report(result)
+
+
+def test_suppressed_generic_group_label_survives_output_filter() -> None:
+    result = MetricResult(
+        name="subset_min_n_guard",
+        level="subset",
+        group="qi:core",
+        value=None,
+        baseline=None,
+        ci=None,
+        n_records=None,
+        n_flagged=None,
+        status="suppressed",
+        reason="subset partition is below the configured minimum cell size",
+    )
+
+    filtered = OutputFilter(min_cell_size=3, rounding_base=1).filter_metric_result(
+        result
+    )
+
+    assert filtered.group == "qi:core"

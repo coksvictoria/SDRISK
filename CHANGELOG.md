@@ -32,6 +32,9 @@ Versioning once a release policy is confirmed.
 
 ### Changed
 
+- Compact JSON/HTML reports: remove repeated per-metric advice, aggregate subset
+  results by generic QI-set or stratum label, retain filtered minimum-n guard
+  and status counts, and show per-subset medians with baselines.
 - `sdrisk run` and `sdrisk clean` accept schema-normalized CSV inputs as well as
   Parquet.
 - Identical full-row values between training and holdout now trigger an explicit

@@ -65,13 +65,7 @@ def lift_results(
     """Set a result's analytic level and filter all group-size contributors."""
     lifted_results: list[MetricResult] = []
     for result in results:
-        label = (
-            f"{group}:{result.group}"
-            if result.group and result.status not in ("suppressed", "not_assessed")
-            else group
-            if result.status not in ("suppressed", "not_assessed")
-            else None
-        )
+        label = f"{group}:{result.group}" if result.group else group
         lifted = replace(result, level=level, group=label)
         lifted_results.append(
             filter_result(
