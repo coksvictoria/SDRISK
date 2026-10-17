@@ -29,3 +29,13 @@ Versioning once a release policy is confirmed.
 - M7 policy-threshold decision support, confidence and recommendation mapping,
   in-memory row-band remediation, output-filtered JSON/HTML reports, provenance
   audit logs, and the `sdrisk run` / `sdrisk clean` Typer CLI.
+
+### Changed
+
+- `sdrisk run` and `sdrisk clean` accept schema-normalized CSV inputs as well as
+  Parquet.
+- Identical full-row values between training and holdout now trigger an explicit
+  warning; without stable source IDs they do not prove the same record appears
+  in both partitions.
+- Subset partitions reuse one equivalence-class index per input instead of
+  rescanning every table for every candidate key.

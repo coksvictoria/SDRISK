@@ -332,3 +332,41 @@
   leave Parquet support as an undeclared optional environment assumption.
 - **Status:** Accepted; dependencies are declared in `pyproject.toml` and
   locked by uv.
+
+## 2026-10-17: Accept schema-normalized CSV inputs
+
+- **Decision:** Allow `sdrisk run` and `clean` to read CSV as well as Parquet;
+  normalize CSV columns according to the declared schema before aligning input
+  dtypes.
+- **Reason:** Real and generated files commonly infer numeric columns as
+  different integer or floating-point dtypes even when they represent the same
+  variable. Schema-driven normalization permits those files to be assessed
+  without silently changing their analytic roles.
+- **Alternatives considered:** Require callers to convert every file to Parquet
+  or relax bundle dtype validation for all formats.
+- **Status:** Accepted. Textual ordinal columns still require an ordered
+  categorical representation and cannot be inferred from CSV alone.
+
+## 2026-10-17: Warn on identical full-row values across real partitions
+
+- **Decision:** Emit a warning rather than reject `real_train` and `real_test`
+  when their full-row values overlap.
+- **Reason:** Without stable source identifiers, identical observed attributes
+  can belong to distinct people; a row-value collision alone cannot establish
+  that the holdout contains a training record. Callers must confirm disjointness
+  from the source split before interpreting holdout-controlled metrics.
+- **Alternatives considered:** Reject every identical row pattern as proof of
+  record overlap or silently accept the collision.
+- **Status:** Accepted; the warning is explicit, but source-level disjointness
+  remains the user's responsibility when identifiers are unavailable.
+
+## 2026-10-17: Index subset equivalence classes in one pass
+
+- **Decision:** Build row-position indexes for each input once when constructing
+  subset partitions, then select each class from those indexes.
+- **Reason:** Recomputing all QI keys for every candidate class caused repeated
+  full-table scans and made the Adult-data pilot impractically slow.
+- **Alternatives considered:** Retain repeated scans or cap the number of
+  reported subset candidates, which could silently omit groups.
+- **Status:** Accepted; this changes the indexing strategy, not the candidate
+  subsets or their disclosure controls.

@@ -166,20 +166,20 @@ def _partitions_for_values(
         if bundle.real_test is None
         else (bundle.real_train, bundle.synthetic, bundle.real_test)
     )
+    positions_by_dataset = [
+        _positions_by_key(data, columns) for data in datasets
+    ]
     distinct_keys = tuple(
-        dict.fromkeys(key for data in datasets for key in row_keys(data, columns))
+        dict.fromkeys(
+            key for positions in positions_by_dataset for key in positions
+        )
     )
     partitions: list[_Subset] = []
     for key in distinct_keys:
-        selected: list[pd.DataFrame] = []
-        for data in datasets:
-            keys = row_keys(data, columns)
-            mask = np.fromiter(
-                (candidate == key for candidate in keys),
-                dtype=np.bool_,
-                count=len(keys),
-            )
-            selected.append(data.iloc[np.flatnonzero(mask)].reset_index(drop=True))
+        selected = [
+            data.iloc[positions.get(key, [])].reset_index(drop=True)
+            for data, positions in zip(datasets, positions_by_dataset, strict=True)
+        ]
         test = selected[2] if len(selected) == 3 else None
         partitions.append(
             _Subset(
@@ -190,6 +190,16 @@ def _partitions_for_values(
             )
         )
     return partitions
+
+
+def _positions_by_key(
+    data: pd.DataFrame, columns: Sequence[str]
+) -> dict[tuple[object, ...], list[int]]:
+    """Index each equivalence class once instead of rescanning every frame per key."""
+    positions: dict[tuple[object, ...], list[int]] = {}
+    for position, key in enumerate(row_keys(data, columns)):
+        positions.setdefault(key, []).append(position)
+    return positions
 
 
 def _analysis_not_assessed(profile: PolicyProfile, reason: str) -> SubsetAnalysis:
