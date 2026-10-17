@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sdrisk assessment report</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
+    table { border-collapse: collapse; margin: 1rem 0 2rem; width: 100%; }
+    th, td { border: 1px solid #bbb; padding: .4rem; text-align: left; }
+    th { background: #eee; }
+    .limitations { border-left: .3rem solid #555; padding: .5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>sdrisk assessment report</h1>
+  <p>Profile: {{ report.profile.name }} ({{ report.profile.release_tier }})</p>
+  <h2>Recommendation</h2>
+  <p>{{ report.decision.recommendation }} — confidence: {{ report.decision.confidence }}</p>
+  <ul>{% for item in report.decision.rationale %}<li>{{ item }}</li>{% endfor %}</ul>
+  <p>Checker's final decision: {{ report.decision.checker_decision or "not recorded" }}</p>
+  <p>Checker rationale: {{ report.decision.checker_rationale or "not recorded" }}</p>
+  <h2>Provenance</h2>
+  <p>Configuration SHA-256: {{ report.provenance.config_hash }}</p>
+  <p>Package version: {{ report.provenance.package_version }}; seed: {{ report.provenance.seed }}</p>
+  <h2>Applicability</h2>
+  {% if report.applicability %}
+  <table>
+    <thead><tr><th>Metric</th><th>Level</th><th>Status</th><th>Reason</th></tr></thead>
+    <tbody>{% for item in report.applicability %}
+      <tr><td>{{ item.name }}</td><td>{{ item.level }}</td><td>{{ item.status }}</td><td>{{ item.reason }}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p>All reported metrics were assessed without suppression.</p>{% endif %}
+  {% for level, metrics in report.results.items() %}
+  <h2>{{ level|capitalize }} results</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Measure</th><th>What a fail means</th><th>Ask the submitter</th><th>Group</th><th>Value</th><th>Baseline</th><th>95% CI</th><th>Records</th><th>Status</th><th>Experimental</th></tr></thead>
+    <tbody>{% for metric in metrics %}
+      <tr>
+        <td>{{ metric.name }}</td><td>{{ metric.measure }}</td>
+        <td>{{ metric.fail_meaning }}</td><td>{{ metric.ask_submitter }}</td>
+        <td>{{ metric.group or "" }}</td>
+        <td>{{ metric.value if metric.value is not none else "" }}</td>
+        <td>{{ metric.baseline if metric.baseline is not none else "" }}</td>
+        <td>{{ metric.ci if metric.ci is not none else "" }}</td>
+        <td>{{ metric.n_records if metric.n_records is not none else "" }}</td>
+        <td>{{ metric.status }}{% if metric.reason %}: {{ metric.reason }}{% endif %}</td>
+        <td>{{ metric.experimental }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table>
+  {% endfor %}
+  <h2>Row-band summary (aggregates only)</h2>
+  {% if report.row_bands.status == "assessed" %}
+  <table>
+    <thead><tr><th>Band</th><th>Count</th><th>Status</th></tr></thead>
+    <tbody>{% for band in ("low", "medium", "high", "total") %}
+      <tr><td>{{ band }}</td><td>{{ report.row_bands[band].value if report.row_bands[band].value is not none else "" }}</td><td>{{ report.row_bands[band].status }}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p>Not assessed: {{ report.row_bands.reason }}</p>{% endif %}
+  <h2>Limitations</h2>
+  <p class="limitations">{{ report.limitations }}</p>
+</body>
+</html>

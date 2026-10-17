@@ -1,0 +1,107 @@
+"""Tests for aggregate-only JSON and HTML reports."""
+
+import json
+
+from sdrisk.decision import AssessmentDecision
+from sdrisk.policy import PolicyProfile
+from sdrisk.provenance import RunProvenance
+from sdrisk.report.html_report import render_html_report
+from sdrisk.report.json_report import render_json_report
+from sdrisk.results import MetricResult, RowStore, RunResult
+
+
+def make_profile() -> PolicyProfile:
+    return PolicyProfile.model_validate(
+        {
+            "name": "report-test",
+            "release_tier": "in_lab",
+            "output": {"min_cell_size": 3, "rounding_base": 1},
+            "variables": {
+                "qi_sets": [{"name": "core", "columns": ["key"]}],
+                "sensitive": [],
+                "strata": [],
+            },
+            "identity": {"k_profile_thresholds": [2]},
+            "distance": {
+                "max_rows_exact": 100,
+                "subsample_rows": 100,
+                "near_match_threshold": 0.05,
+            },
+            "clusters": {"k": 2, "min_cluster_size": 2, "seeds": 2},
+            "thresholds": {"risk": {"review": 0.1, "fail": 0.5}},
+            "policy": {"require_test_for_public_tier": False},
+        }
+    )
+
+
+def make_run_result() -> RunResult:
+    profile = make_profile()
+    result = MetricResult(
+        name="risk",
+        level="table",
+        value=0.3,
+        baseline=0.1,
+        ci=(0.2, 0.4),
+        n_records=20,
+        n_flagged=9,
+        status="review",
+    )
+    row_store = RowStore()
+    for band, count in (("low", 10), ("medium", 8), ("high", 2)):
+        for _ in range(count):
+            row_store.add_profile(
+                {
+                    "composite_band": band,
+                    "dcr_train": 0.123456,
+                    "exact_match": True,
+                }
+            )
+    decision = AssessmentDecision(
+        results=(result,),
+        recommendation="Release with modifications",
+        confidence="medium",
+        rationale=("A metric requires review.",),
+    )
+    return RunResult(
+        table_results=(result,),
+        subset_results=(),
+        cluster_results=(),
+        row_store=row_store,
+        row_status="assessed",
+        provenance=RunProvenance(
+            config_hash="config-digest",
+            input_hashes={"synthetic": "file-digest"},
+            package_version="0.0.0",
+            seed=17,
+            sampling_fractions={},
+        ),
+        decision=decision,
+        profile=profile,
+    )
+
+
+def test_json_report_is_filtered_and_contains_aggregate_row_bands_only() -> None:
+    payload = render_json_report(make_run_result())
+    report = json.loads(payload)
+    serialized = payload.lower()
+
+    assert report["row_bands"]["total"]["value"] == 20
+    assert report["row_bands"]["high"]["status"] == "suppressed"
+    assert "dcr_train" not in serialized
+    assert '"exact_match":' not in serialized
+    assert "0.123456" not in serialized
+    assert "row_profiles" not in serialized
+    assert "baseline" in serialized
+    assert "not prove" in serialized
+    assert "ask_submitter" in serialized
+
+
+def test_html_report_uses_the_same_safe_aggregates() -> None:
+    report = render_html_report(make_run_result()).lower()
+
+    assert "release with modifications" in report
+    assert "dcr_train" not in report
+    assert "exact_match</" not in report
+    assert "0.123456" not in report
+    assert "passing these checks" in report
+    assert "ask the submitter" in report
