@@ -1,7 +1,6 @@
 # AGENTS.md: build `sdrisk`, a disclosure-risk evaluation package for synthetic tabular data
 
-> Hypothetical project brief for an AI coding assistant (Claude Code, Copilot agent, Cursor, etc.).
-> Rename as needed: `CLAUDE.md`, `.github/copilot-instructions.md`, or keep `AGENTS.md`.
+> Project brief and working rules for AI coding assistants (Claude Code, Copilot agent, Cursor, etc.).
 > Items marked `TODO(confirm)` are policy decisions that a human must confirm. Never guess them.
 
 ---
