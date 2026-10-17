@@ -1,25 +1,25 @@
 # Local benchmark data
 
-CSV files in this directory are tracked by Git and will be public in this
-repository. Do not place data here unless it is approved for public release.
-Benchmark outputs under `results/` and Parquet files are ignored by Git.
+CSV files in this directory are Git-trackable; committed files will be public
+in this repository. Do not place data here unless it is approved for public
+release and authorized for processing in this environment. Benchmark outputs
+under `results/` and Parquet files are ignored by Git.
 
 Place files in this structure:
 
 ```text
 benchmarks/local_data/
   real/
-    train.parquet
-    holdout.parquet
+    real.csv
+    holdout.csv
   synthetic/
-    <model-name>/
-      <run-name>.parquet
+    <model-name>.csv
+  results/                  # local profiles, samples, and reports; Git-ignored
 ```
 
-Use CSV files with matching analysis columns. Keep the real training and
+CSV files should have matching analysis columns. Keep the real training and
 holdout files disjoint; synthetic files should have the same analysis columns
-as the real files. You can add multiple named model or run files under
-`synthetic/`.
+as the real files. Add one named CSV per model or run under `synthetic/`.
 
 Before benchmarking, provide the target column, any columns to exclude (such
 as row identifiers), and a short mapping from each synthetic file's model/run
