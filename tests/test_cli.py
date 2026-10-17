@@ -4,29 +4,34 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import yaml
 from typer.testing import CliRunner
 
 from sdrisk.cli import app
 
 
+@pytest.mark.parametrize("extension", [".csv", ".parquet"])
 def test_run_and_clean_write_reports_without_row_flags_or_removal_lists(
-    tmp_path: Path,
+    tmp_path: Path, extension: str
 ) -> None:
     train = pd.DataFrame(
         {
             "key": [f"key-{index}" for index in range(12)],
-            "value": [float(index) for index in range(12)],
+            "value": list(range(12)),
             "secret": [f"secret-{index % 3}" for index in range(12)],
         }
     )
     test = train.assign(key=[f"holdout-{index}" for index in range(12)])
-    train_path = tmp_path / "train.parquet"
-    synthetic_path = tmp_path / "synthetic.parquet"
-    test_path = tmp_path / "test.parquet"
-    train.to_parquet(train_path, index=False)
-    train.to_parquet(synthetic_path, index=False)
-    test.to_parquet(test_path, index=False)
+    synthetic = (
+        train.astype({"value": "float64"}) if extension == ".csv" else train
+    )
+    train_path = tmp_path / f"train{extension}"
+    synthetic_path = tmp_path / f"synthetic{extension}"
+    test_path = tmp_path / f"test{extension}"
+    _write_table(train, train_path)
+    _write_table(synthetic, synthetic_path)
+    _write_table(test, test_path)
 
     schema_path = tmp_path / "schema.yaml"
     schema_path.write_text(
@@ -130,3 +135,10 @@ def test_run_and_clean_write_reports_without_row_flags_or_removal_lists(
     assert "key-0" not in clean_result.output
     assert "removed" not in clean_result.output.lower()
     assert pd.read_parquet(output_path).empty
+
+
+def _write_table(frame: pd.DataFrame, path: Path) -> None:
+    if path.suffix == ".csv":
+        frame.to_csv(path, index=False)
+    else:
+        frame.to_parquet(path, index=False)

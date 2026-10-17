@@ -38,7 +38,8 @@ the environment and lock; setuptools remains the package build backend.
 
 ## Run an assessment
 
-Inputs are Parquet dataframes, a YAML schema, and a YAML policy profile:
+Inputs may be CSV or Parquet dataframes, plus a YAML schema and policy profile.
+CSV columns are normalized according to the schema types:
 
 ```powershell
 uv run sdrisk run `

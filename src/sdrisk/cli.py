@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Annotated, Any
 
+import numpy as np
 import pandas as pd
 import typer
 import yaml
@@ -30,17 +31,17 @@ def run_command(
     profile: Annotated[Path, typer.Option("--profile", help="YAML policy profile.")],
     schema: Annotated[Path, typer.Option("--schema", help="YAML variable schema.")],
     real_train: Annotated[
-        Path, typer.Option("--real-train", help="Training data in Parquet.")
+        Path, typer.Option("--real-train", help="Training data in CSV or Parquet.")
     ],
     synthetic: Annotated[
-        Path, typer.Option("--synthetic", help="Synthetic data in Parquet.")
+        Path, typer.Option("--synthetic", help="Synthetic data in CSV or Parquet.")
     ],
     out_dir: Annotated[
         Path, typer.Option("--out-dir", help="Directory for aggregate reports.")
     ],
     real_test: Annotated[
         Path | None,
-        typer.Option("--real-test", help="Optional disjoint holdout data in Parquet."),
+        typer.Option("--real-test", help="Optional disjoint holdout data in CSV or Parquet."),
     ] = None,
     seed: Annotated[
         int, typer.Option("--seed", min=0, help="Seed for all stochastic metrics.")
@@ -49,9 +50,9 @@ def run_command(
     """Run the configured assessment and write aggregate-only reports."""
     policy = load_policy_profile(profile)
     schema_model = _load_schema(schema)
-    train_data = pd.read_parquet(real_train)
-    synthetic_data = pd.read_parquet(synthetic)
-    test_data = pd.read_parquet(real_test) if real_test is not None else None
+    train_data = _read_table(real_train, schema_model)
+    synthetic_data = _read_table(synthetic, schema_model)
+    test_data = _read_table(real_test, schema_model) if real_test is not None else None
     bundle = DatasetBundle(train_data, synthetic_data, test_data)
     input_files = {
         "real_train": real_train,
@@ -125,10 +126,10 @@ def clean_command(
     if config_hash != manifest["config_hash"]:
         raise ValueError("policy profile or schema differs from the assessed run")
 
-    train_data = pd.read_parquet(input_paths["real_train"])
-    synthetic_data = pd.read_parquet(input_paths["synthetic"])
+    train_data = _read_table(input_paths["real_train"], schema_model)
+    synthetic_data = _read_table(input_paths["synthetic"], schema_model)
     test_path = input_paths.get("real_test")
-    test_data = pd.read_parquet(test_path) if test_path is not None else None
+    test_data = _read_table(test_path, schema_model) if test_path is not None else None
     bundle = DatasetBundle(train_data, synthetic_data, test_data)
     result = run_assessment(
         bundle,
@@ -161,6 +162,41 @@ def _load_schema(path: Path) -> Schema:
         except yaml.YAMLError as error:
             raise ValueError(f"Invalid schema YAML in {path}: {error}") from error
     return Schema.model_validate(raw)
+
+
+def _read_table(path: Path, schema: Schema) -> pd.DataFrame:
+    """Read CSV or Parquet data and normalize CSV columns by their schema types."""
+    suffix = path.suffix.casefold()
+    if suffix == ".csv":
+        frame = pd.read_csv(path, skipinitialspace=True, encoding="utf-8-sig")
+        for variable in schema.variables:
+            if variable.name not in frame.columns:
+                continue
+            values = frame[variable.name]
+            if variable.vtype == "numeric":
+                frame[variable.name] = pd.to_numeric(values, errors="raise").astype(
+                    np.float64
+                )
+            elif variable.vtype == "categorical":
+                frame[variable.name] = values.astype("string")
+            elif variable.vtype == "date":
+                frame[variable.name] = pd.to_datetime(
+                    values, errors="raise", utc=True
+                )
+            elif variable.vtype == "ordinal":
+                if not pd.api.types.is_numeric_dtype(values.dtype):
+                    raise ValueError(
+                        f"CSV column {variable.name!r} is declared ordinal but "
+                        "contains text; use numeric ordinal values or Parquet "
+                        "with an ordered categorical column"
+                    )
+                frame[variable.name] = pd.to_numeric(values, errors="raise").astype(
+                    np.float64
+                )
+        return frame
+    if suffix == ".parquet":
+        return pd.read_parquet(path)
+    raise ValueError(f"unsupported input format for {path}; use CSV or Parquet")
 
 
 def _read_manifest(path: Path) -> dict[str, Any]:

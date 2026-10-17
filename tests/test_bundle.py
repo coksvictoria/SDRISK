@@ -33,11 +33,11 @@ def test_bundle_rejects_dtype_mismatch() -> None:
         )
 
 
-def test_bundle_rejects_exact_train_test_overlap_including_missing_values() -> None:
+def test_bundle_warns_on_identical_train_test_rows_including_missing_values() -> None:
     frame = pd.DataFrame({"age": [20, None], "region": ["north", "south"]})
 
-    with pytest.raises(ValueError, match="disjoint"):
-        DatasetBundle(
+    with pytest.warns(UserWarning, match="identical row values"):
+        bundle = DatasetBundle(
             real_train=frame,
             synthetic=frame.copy(),
             real_test=pd.DataFrame(
@@ -47,6 +47,7 @@ def test_bundle_rejects_exact_train_test_overlap_including_missing_values() -> N
                 }
             ),
         )
+    assert bundle.real_test is not None
 
 
 def test_bundle_rejects_duplicate_column_names() -> None:

@@ -1,5 +1,6 @@
 """Validated input data bundles."""
 
+import warnings
 from dataclasses import dataclass
 
 import pandas as pd
@@ -9,9 +10,10 @@ import pandas as pd
 class DatasetBundle:
     """Hold aligned real and synthetic tabular data.
 
-    The bundle checks column names and pandas dtypes across all inputs. An exact
-    row appearing in both real partitions is rejected because the holdout must
-    be disjoint from the generator's training data.
+    The bundle checks column names and pandas dtypes across all inputs. Identical
+    full-row values across the real partitions trigger a warning: without a
+    stable record identifier, they may be duplicate records or distinct people
+    with the same observed attributes.
     """
 
     real_train: pd.DataFrame
@@ -50,7 +52,13 @@ class DatasetBundle:
         if self.real_test is not None and _has_exact_row_overlap(
             self.real_train, self.real_test
         ):
-            raise ValueError("real_train and real_test must be disjoint")
+            warnings.warn(
+                "real_train and real_test contain identical row values; "
+                "without stable record identifiers, confirm their disjointness "
+                "using the source split before interpreting holdout metrics",
+                UserWarning,
+                stacklevel=2,
+            )
 
 
 def _has_exact_row_overlap(left: pd.DataFrame, right: pd.DataFrame) -> bool:
