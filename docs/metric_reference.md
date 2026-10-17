@@ -179,8 +179,8 @@ The experimental cluster exposure ratio for cluster `c` is
 `(share_synthetic(c) / share_train(c))`. Its baseline is
 `(share_test(c) / share_train(c))`; without a holdout it is `not_assessed`.
 CER is a candidate diagnostic, not an established privacy metric, and remains
-experimental pending M8 validation. Stability and CER are both aggregate
-diagnostics; no cluster's raw record assignments are exportable.
+experimental and unvalidated. Stability and CER are both aggregate diagnostics;
+no cluster's raw record assignments are exportable.
 
 ## Internal row profiles
 

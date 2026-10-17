@@ -5,11 +5,11 @@ cluster analysis, internal row profiles (M5), and membership and simplified
 attack diagnostics (M6) are implemented. The no-holdout ML attribute check is
 experimental and is not a synthetic-data leakage estimate. Cluster exposure
 ratio (CER), KDE density-ratio MIA, singling-out, and linkability are
-experimental diagnostics. CER has not yet been validated on the localized-leak
-benchmark. The simplified Anonymeter-style attacks do not include randomized
-predicate generation, auxiliary tables, or naive attacks. Distance and density
-membership metrics require a holdout. Row-band thresholds in the example
-profile are placeholders requiring policy confirmation.
+experimental diagnostics. CER has not been validated on a dedicated
+localized-leak benchmark. The simplified Anonymeter-style attacks do not
+include randomized predicate generation, auxiliary tables, or naive attacks.
+Distance and density membership metrics require a holdout. Row-band thresholds
+in the example profile are placeholders requiring policy confirmation.
 
 Decision classifications use the configured metric thresholds. Metrics without
 a configured threshold remain in review; the package does not invent a default

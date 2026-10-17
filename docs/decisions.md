@@ -236,7 +236,7 @@
 - **Alternatives considered:** Select the best-performing seed; report raw
   labels for undersized clusters; present CER as established.
 - **Status:** Provisional diagnostic; stability and CER validation remains
-  required in M8.
+  outstanding; CER remains experimental and must not be presented as validated.
 
 ## 2026-10-17: Restrict row profiles and configure composite bands
 
@@ -370,3 +370,17 @@
   reported subset candidates, which could silently omit groups.
 - **Status:** Accepted; this changes the indexing strategy, not the candidate
   subsets or their disclosure controls.
+
+## 2026-10-17: Remove the public-data M8 benchmark from project scope
+
+- **Decision:** Remove the bundled public benchmark runner and its dedicated
+  fixture tests; retain the local data folders used to assess the user's
+  approved datasets.
+- **Reason:** The project will focus on assessments of the user's generator
+  outputs rather than maintaining a separate general-purpose public-data
+  validation suite.
+- **Alternatives considered:** Keep the benchmark harness as an independent
+  validation workstream or require its completion before documentation and
+  release work.
+- **Status:** Accepted. Metrics that depended on that validation, including
+  CER, remain explicitly experimental and unvalidated.

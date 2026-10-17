@@ -264,7 +264,7 @@ Per cluster, report: size, each applicable Tier 1 metric, local distance-to-clos
 > **Cluster exposure ratio (CER), `experimental=True`.**
 > `CER_c = share_synthetic(c) / share_train(c)`.
 > With `real_test`, compare against the same ratio for the test set, which should be near 1 for an independent sample. Over-representation of a cluster in the synthetic data beyond that expectation may indicate copying or local overfitting.
-> This is a candidate diagnostic and not an established metric. Always set `experimental=True` and describe it as such in reports until validated (see 13.3).
+> This is a candidate diagnostic and not an established metric. Always set `experimental=True` and describe it as such in reports; no validation benchmark is currently in scope.
 
 ### 8.4 Row level (internal)
 For each synthetic row, build a `RowProfile` stored only in `RowStore`:
@@ -381,10 +381,7 @@ Tiny hand-built datasets with known exact-match rate, UEM, DCR, CAP, k-profile v
 | `localized_leak` | Copy rows from only one small cluster or subgroup | Table-level metrics change little; **subset and cluster level must catch it** |
 | `heavy_noise` | Strongly noised file | Risk low; utility not our concern |
 
-### 13.3 Validation of the candidate cluster metric
-The `localized_leak` fixture is the key experiment: show that table-level metrics barely move while the cluster exposure ratio and per-cluster metrics flag the affected cluster, with a low false-alarm rate on `independent`. Record detection and false-alarm rates in `benchmarks/`. Until this is done, CER stays `experimental=True`.
-
-### 13.4 Other tests
+### 13.3 Other tests
 - Property-based tests for the output filter.
 - Determinism: same inputs, config and seed give identical results.
 - Export scan: no row-level fields in any JSON, HTML or log.
@@ -427,11 +424,10 @@ Distance-based MIA, density-ratio MIA, singling out, linkability (wrapper or sim
 `decision.py` (status, confidence, recommendation), `remediation.py`, JSON and HTML reports, CLI.
 **Done when:** a non-expert can read a report and say what to do next; `sdrisk clean` works without exporting flags.
 
-### M8. Validation benchmark
-Run the full suite on public datasets with several generators and all planted-leak fixtures. Report detection rates, false-alarm rates, sensitivity to QI choices and distance weights, runtime and memory.
-
 ### M9. Documentation and release
 `metric_reference.md`, `limitations.md`, `checker_guide.md`, developer guide, release v0.1.0.
+The full public-data validation benchmark formerly planned as M8 is out of
+scope. Experimental diagnostics, including CER, remain marked as unvalidated.
 
 ---
 
@@ -444,7 +440,6 @@ Run the full suite on public datasets with several generators and all planted-le
 - Output filter covers every export path, with property-based tests.
 - Policy profiles for three tiers load from YAML.
 - JSON and HTML reports with confidence level, applicability section and limitations.
-- Benchmark on public data documented.
 - Lint, types, tests, and CI all green; docs complete.
 
 ---

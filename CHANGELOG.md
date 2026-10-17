@@ -39,3 +39,8 @@ Versioning once a release policy is confirmed.
   in both partitions.
 - Subset partitions reuse one equivalence-class index per input instead of
   rescanning every table for every candidate key.
+
+### Removed
+
+- The M8 public-data validation benchmark harness and its dedicated fixture
+  tests; M8 is out of scope, while experimental metrics remain unvalidated.

@@ -77,7 +77,10 @@ results behind the output filter.
 
 ## Roadmap
 
-See `AGENTS.md`, section 14. The next milestone is **M8: validation benchmark**.
+The full public-data validation benchmark (M8) is out of scope. The next
+planned milestone is **M9: documentation and release**. Experimental metrics
+remain explicitly unvalidated; see [`docs/limitations.md`](docs/limitations.md).
+See `AGENTS.md`, section 14, for the project milestones.
 Distance-engine behavior is described in [`docs/distance_engine.md`](docs/distance_engine.md);
 identity and attribute metric definitions are in
 [`docs/metric_reference.md`](docs/metric_reference.md).
