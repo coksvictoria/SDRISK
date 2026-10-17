@@ -12,5 +12,4 @@ dist/
 htmlcov/
 reports/
 *.parquet
-benchmarks/local_data/*
-!benchmarks/local_data/README.md
+benchmarks/local_data/results/
