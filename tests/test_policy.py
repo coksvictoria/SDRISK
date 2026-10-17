@@ -109,12 +109,3 @@ def test_load_policy_profile_reports_invalid_yaml(tmp_path: Path) -> None:
 def test_load_policy_profile_reports_missing_file(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_policy_profile(tmp_path / "missing.yaml")
-
-
-def test_public_example_profile_loads_with_placeholder_policy_values() -> None:
-    project_root = Path(__file__).parents[1]
-
-    profile = load_policy_profile(project_root / "profiles" / "example_public_tier.yaml")
-
-    assert profile.name == "example_public_tier"
-    assert profile.output.min_cell_size == 6

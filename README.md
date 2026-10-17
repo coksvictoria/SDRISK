@@ -16,10 +16,11 @@ The package provides table and subgroup metrics, seeded cluster diagnostics,
 internal row profiles whose only exportable summaries pass through the output
 filter, holdout-controlled membership and simplified attack diagnostics,
 policy-based recommendations, and aggregate-only JSON/HTML reports. It is
-decision support, not a release approval system. Thresholds and example profile
-values remain policy placeholders; the candidate metrics and simplified attacks
-are not fully validated. Do not interpret a recommendation as proof that data
-are safe or anonymous.
+decision support, not a release approval system. Thresholds and variable
+choices require approved policy; candidate metrics and simplified attacks are
+not fully validated. Do not interpret a recommendation as proof that data are
+safe or anonymous. Supply your own schema and policy YAML; no default
+release-policy profile is shipped.
 
 ## Development setup
 
@@ -40,10 +41,12 @@ the environment and lock; setuptools remains the package build backend.
 
 Inputs may be CSV or Parquet dataframes, plus a YAML schema and policy profile.
 CSV columns are normalized according to the schema types:
+Create the schema and policy files for the data and release context being
+assessed; the project does not ship an example release profile.
 
 ```powershell
 uv run sdrisk run `
-  --profile profiles/example_public_tier.yaml `
+  --profile policy.yaml `
   --schema schema.yaml `
   --real-train train.parquet `
   --synthetic synthetic.parquet `

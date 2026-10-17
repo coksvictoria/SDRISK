@@ -384,3 +384,25 @@
   release work.
 - **Status:** Accepted. Metrics that depended on that validation, including
   CER, remain explicitly experimental and unvalidated.
+
+## 2026-10-17: Use manual quality checks instead of GitHub Actions CI
+
+- **Decision:** Remove the GitHub Actions workflow and leave code-quality
+  checks to be run manually with the documented local commands.
+- **Reason:** The project owner prefers manual commits and does not need an
+  automated CI/CD pipeline.
+- **Alternatives considered:** Keep checks running automatically on pushes and
+  pull requests.
+- **Status:** Accepted. The Python 3.10–3.12 test matrix is no longer run
+  automatically; local lint, type, and test tools remain available.
+
+## 2026-10-17: Do not ship an example release-policy profile
+
+- **Decision:** Remove the placeholder public-tier YAML profile; require users
+  to supply a policy profile appropriate to their release context.
+- **Reason:** The example's thresholds, disclosure controls, and variable
+  choices were unapproved and could be mistaken for a recommended default.
+- **Alternatives considered:** Keep the example with warnings or replace it
+  with another unconfirmed policy.
+- **Status:** Accepted. YAML loading and validation remain supported and are
+  covered by tests using temporary policy files.

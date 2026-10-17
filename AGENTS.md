@@ -94,7 +94,6 @@ sdrisk/
     metric_reference.md
     limitations.md
     checker_guide.md
-  profiles/                 # example YAML profiles with public-safe defaults only
   src/sdrisk/
     schema.py               # variable types and roles
     bundle.py               # DatasetBundle: real_train, synthetic, real_test (optional)
@@ -303,8 +302,8 @@ Rules:
 ## 10. Policy profile example (public-safe placeholders)
 
 ```yaml
-# profiles/example_public_tier.yaml
-name: example_public_tier
+# example_policy.yaml
+name: example_policy
 release_tier: public            # in_lab | licensed | public
 output:
   min_cell_size: 6              # TODO(confirm)
@@ -351,7 +350,7 @@ policy:
 
 ```
 sdrisk run \
-  --profile profiles/example_public_tier.yaml \
+  --profile policy.yaml \
   --schema schema.yaml \
   --real-train train.parquet \
   --synthetic synthetic.parquet \
@@ -393,8 +392,8 @@ Tiny hand-built datasets with known exact-match rate, UEM, DCR, CAP, k-profile v
 ## 14. Milestones (give each to the agent as a separate task)
 
 ### M0. Setup
-Create repo skeleton, `pyproject.toml`, ruff, mypy (strict), pytest, pre-commit, CI workflow, licence placeholder, README, CHANGELOG.
-**Done when:** a clean install runs an empty test suite and CI is green.
+Create repo skeleton, `pyproject.toml`, ruff, mypy (strict), pytest, pre-commit, licence placeholder, README, CHANGELOG.
+**Done when:** a clean install runs an empty test suite and local quality checks pass.
 
 ### M1. Core scaffolding
 `schema.py`, `bundle.py` (with `real_test` optional and disjointness validation), `policy.py` (pydantic plus YAML), `results.py`, `metrics/base.py` registry, `applicability.py`, `provenance.py`, `output_filter.py`.
@@ -438,9 +437,9 @@ scope. Experimental diagnostics, including CER, remain marked as unvalidated.
 - Cluster-level results with stability checks; CER marked experimental unless validated.
 - Row-level profiles computed internally, with a passing export-scan test.
 - Output filter covers every export path, with property-based tests.
-- Policy profiles for three tiers load from YAML.
+- User-supplied policy profiles for supported release tiers load from YAML.
 - JSON and HTML reports with confidence level, applicability section and limitations.
-- Lint, types, tests, and CI all green; docs complete.
+- Lint, types, and tests pass locally; docs complete.
 
 ---
 

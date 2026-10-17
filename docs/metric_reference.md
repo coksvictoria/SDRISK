@@ -52,8 +52,7 @@ benchmark and evaluation tools](https://github.com/usnistgov/SDNist).
 For each profile-configured cutoff `k`, the value is the share of synthetic rows
 whose exact QI class has fewer than `k` records. The baseline is the same share
 in `real_train`. Cutoffs are configured under `identity.k_profile_thresholds`;
-the example profile's `[2, 5, 10]` values are illustrative settings, not
-release-policy approvals.
+`[2, 5, 10]` are illustrative values only, not release-policy approvals.
 
 ## DCR overfitting share
 

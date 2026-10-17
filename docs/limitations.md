@@ -9,7 +9,7 @@ experimental diagnostics. CER has not been validated on a dedicated
 localized-leak benchmark. The simplified Anonymeter-style attacks do not
 include randomized predicate generation, auxiliary tables, or naive attacks.
 Distance and density membership metrics require a holdout. Row-band thresholds
-in the example profile are placeholders requiring policy confirmation.
+must be set in a user-supplied profile and confirmed as policy.
 
 Decision classifications use the configured metric thresholds. Metrics without
 a configured threshold remain in review; the package does not invent a default

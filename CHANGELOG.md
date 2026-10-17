@@ -44,3 +44,7 @@ Versioning once a release policy is confirmed.
 
 - The M8 public-data validation benchmark harness and its dedicated fixture
   tests; M8 is out of scope, while experimental metrics remain unvalidated.
+- GitHub Actions CI workflow; linting, type checking, tests, and pre-commit
+  remain available for manual/local use.
+- Shipped placeholder public-tier profile; users provide their own approved
+  policy YAML.
