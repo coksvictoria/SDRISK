@@ -150,6 +150,20 @@ def test_subset_report_aggregates_metrics_and_preserves_qi_guard_counts() -> Non
             (0.6, "fail"),
         )
     )
+    subset_results.extend(
+        MetricResult(
+            name="cap_accuracy",
+            level="subset",
+            group="qi:core:core:income",
+            value=value,
+            baseline=0.4,
+            ci=None,
+            n_records=10,
+            n_flagged=None,
+            status="review",
+        )
+        for value in (0.7, 0.8, 0.9)
+    )
     result = replace(result, subset_results=tuple(subset_results))
 
     report = json.loads(render_json_report(result))
@@ -162,7 +176,8 @@ def test_subset_report_aggregates_metrics_and_preserves_qi_guard_counts() -> Non
         "status": "reported",
         "reason": "",
     }
-    metric = subset[0]["metrics"][0]
+    metrics = {metric["name"]: metric for metric in subset[0]["metrics"]}
+    metric = metrics["exact_match_rate"]
     assert metric["name"] == "exact_match_rate"
     assert metric["n_groups"]["value"] == 6
     assert metric["median_value"] == 0.35
@@ -170,7 +185,19 @@ def test_subset_report_aggregates_metrics_and_preserves_qi_guard_counts() -> Non
     assert metric["status_counts"]["pass"]["value"] == 3
     assert metric["status_counts"]["review"]["status"] == "suppressed"
     assert metric["status_counts"]["fail"]["status"] == "suppressed"
+    assert metrics["cap_accuracy"]["median_value"] == 0.8
+    assert report["applicability"] == [
+        {
+            "level": "subset",
+            "status": "suppressed",
+            "count": {"value": 3, "status": "reported", "reason": ""},
+        }
+    ]
     assert "ask_submitter" not in render_json_report(result)
+    html = render_html_report(result).lower()
+    assert "qi:core" in html
+    assert "median value" in html
+    assert "ask the submitter" not in html
 
 
 def test_suppressed_generic_group_label_survives_output_filter() -> None:

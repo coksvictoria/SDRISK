@@ -158,10 +158,12 @@ from all supplied datasets, so synthetic-only and holdout-only groups are not
 silently omitted. Result group labels contain only the stratum or QI-set name;
 observed values and exact keys are not exposed. A group is suppressed when a
 required train, synthetic, or supplied holdout partition is below
-`output.min_cell_size`. `n_subsets_tested` and `n_subsets_suppressed` are
-reported separately through the output filter, so small metadata counts are
-also suppressed. No multiple-comparison correction is applied, and isolated
-results require cautious interpretation.
+`output.min_cell_size`. The JSON and HTML reports summarize metrics by generic
+QI-set or stratum label, with unweighted medians of reportable values and
+baselines plus output-filtered status counts. They report minimum-n suppressed
+group counts by label; individual equivalence-class keys are never exposed.
+No multiple-comparison correction is applied, and isolated results require
+cautious interpretation.
 
 ## Cluster analysis and cluster exposure ratio
 

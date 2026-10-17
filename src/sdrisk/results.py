@@ -20,7 +20,7 @@ RiskBand = Literal["low", "medium", "high"]
 
 @dataclass(frozen=True)
 class MetricResult:
-    """Represent a metric outcome before or after output filtering."""
+    """Represent a metric outcome; group labels must be generic, never observed keys."""
 
     name: str
     level: Level

@@ -34,6 +34,7 @@ def build_report_payload(result: RunResult) -> dict[str, Any]:
         "subset": _subset_payload(
             result.subset_results,
             result.profile.variables.qi_sets,
+            result.profile.variables.strata,
             output_filter,
         ),
         "cluster": [
@@ -136,12 +137,13 @@ def _metric_payload(
 def _subset_payload(
     results: tuple[MetricResult, ...],
     qi_sets: list[QISet],
+    strata: list[str],
     output_filter: OutputFilter,
 ) -> list[dict[str, Any]]:
     grouped: dict[str | None, list[MetricResult]] = defaultdict(list)
     for result in results:
         filtered = output_filter.filter_metric_result(result)
-        group = _subset_group_name(filtered.group, qi_sets)
+        group = _subset_group_name(filtered.group, qi_sets, strata)
         grouped[group].append(filtered)
 
     summaries: list[dict[str, Any]] = []
@@ -176,13 +178,27 @@ def _subset_payload(
     return summaries
 
 
-def _subset_group_name(group: str | None, qi_sets: list[QISet]) -> str | None:
-    """Remove a repeated QI-set suffix while retaining generic group labels."""
+def _subset_group_name(
+    group: str | None,
+    qi_sets: list[QISet],
+    strata: list[str],
+) -> str | None:
+    """Normalize generic labels to one configured QI set or stratum."""
     if group is None:
         return None
     for qi_set in qi_sets:
-        if group == f"qi:{qi_set.name}:{qi_set.name}":
-            return f"qi:{qi_set.name}"
+        qi_prefix = f"qi:{qi_set.name}"
+        if group == qi_prefix or group.startswith(f"{qi_prefix}:"):
+            return qi_prefix
+    for stratum in strata:
+        stratum_prefix = f"stratum:{stratum}:"
+        if group.startswith(stratum_prefix):
+            qiset_label = group.removeprefix(stratum_prefix)
+            for qi_set in qi_sets:
+                if qiset_label == qi_set.name or qiset_label.startswith(
+                    f"{qi_set.name}:"
+                ):
+                    return f"{stratum_prefix}{qi_set.name}"
     return group
 
 
@@ -261,4 +277,3 @@ def _applicability_summary(
 
 def _count_payload(count: FilteredCount) -> dict[str, Any]:
     return {"value": count.value, "status": count.status, "reason": count.reason}
-
